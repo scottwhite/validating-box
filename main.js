@@ -37,38 +37,51 @@
 
   }
 
-  //http://stackoverflow.com/questions/4877326/how-can-i-tell-if-a-string-contains-multibyte-characters-in-javascript
-  function surrogatePairToCodePoint(charCode1, charCode2) {
-    return ((charCode1 & 0x3FF) << 10) + (charCode2 & 0x3FF) + 0x10000;
-  }
-  function cleanText(str){
+  // //http://stackoverflow.com/questions/4877326/how-can-i-tell-if-a-string-contains-multibyte-characters-in-javascript
+  // function surrogatePairToCodePoint(charCode1, charCode2) {
+  //   return ((charCode1 & 0x3FF) << 10) + (charCode2 & 0x3FF) + 0x10000;
+  // }
+  // function XXcleanText(str){
 
-    // Read string in character by character and create an array of code points
-    var codePoints = [], i = 0, charCode;
+  //   // Read string in character by character and create an array of code points
+  //   var codePoints = [], i = 0, charCode;
     
-    while (i < str.length) {
-      charCode = str.charCodeAt(i);
-      if ((charCode & 0xF800) == 0xD800) {
-        codePoints.push(surrogatePairToCodePoint(charCode, str.charCodeAt(++i)));
-      } else {
-        codePoints.push(charCode);
-      }
-      ++i;
-    }
+  //   while (i < str.length) {
+  //     charCode = str.charCodeAt(i);
+  //     if ((charCode & 0xF800) == 0xD800) {
+  //       codePoints.push(surrogatePairToCodePoint(charCode, str.charCodeAt(++i)));
+  //     } else {
+  //       codePoints.push(charCode);
+  //     }
+  //     ++i;
+  //   }
+  //   var cleaned = '';
+  //   console.log('codepoints ', codePoints);
+  //   codePoints.forEach(function(c){
+  //     if(c <= 65535){
+  //       cleaned += String.fromCodePoint(c);
+  //     }
+  //   });
+  //   return cleaned;
+  // }
+
+  function cleanText(text){
     var cleaned = '';
-    console.log('codepoints ', codePoints);
-    codePoints.forEach(function(c){
-      if(c <= 65535){
-        cleaned += String.fromCodePoint(c);
+    //does not work in IE/Safari, need solution alt solutions
+    for(var v of text){
+      if(v.length == 1){
+        cleaned += v;
       }
-    });
+    }
+    checkText(cleaned);
     return cleaned;
+
   }
 
   function insertText(cp, text) {
     var cleaned = cleanText(text);
     if (cp == ed.textContent.length) {
-      ed.textContent = ed.textContent + cleanText(text) + ' ';
+      ed.textContent = ed.textContent + cleaned + ' ';
       return;
     }
     var t = ed.textContent;
@@ -77,7 +90,7 @@
       if (i < cp) {
         newt += t.charAt(i);
       } else {
-        newt += text;
+        newt += cleaned;
       }
     }
     ed.textContent = newt;
@@ -99,7 +112,6 @@
       var pasted = (cp == ed.textContent.length);
       var clip = evnt.clipboardData || window.clipboardData;
       var text = clip.getData('text');
-      checkText(text);
       insertText(cp, text);
       updatecount();
       turnRed(pasted);
@@ -139,11 +151,6 @@
       checkText(str);
       var tl = ed.textContent.length;
       turnRed();
-      // if(tl > adjustForSpaces() && overflow === false){
-      //   genHat();
-      // }else{
-      //   // overflow = false;
-      // }
       updatecount();
     });
   }
