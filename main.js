@@ -87,10 +87,10 @@
     var t = ed.textContent;
     var newt = '';
     for (var i = 0; i < t.length; i++) {
-      if (i < cp) {
-        newt += t.charAt(i);
-      } else {
+      if (i == cp) {
         newt += cleaned;
+      } else {
+        newt += t.charAt(i);
       }
     }
     ed.textContent = newt;
