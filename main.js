@@ -104,7 +104,6 @@
     trackingbox = document.getElementById('tracking-box');
     trackpt = document.getElementById('tracking-point');
 
-
     endpos = 0;
 
     maxc.textContent = LIMIT;
@@ -127,7 +126,6 @@
         checkText();
         return;
       }
-      console.log(evnt);
       if (evnt.key && evnt.key.toLocaleLowerCase() == 'backspace') {
         updatecount();
         checkText();
@@ -153,7 +151,6 @@
         return;
       }
       checkText(str);
-      var tl = ed.textContent.length;
       turnRed();
       updatecount();
     });
@@ -171,21 +168,6 @@
   function stopPosSet(event) {
     event.preventDefault();
     event.stopPropagation();
-  }
-  function genHat() {
-    return;
-    if (hatted === true) {
-      return;
-    }
-    // var range = document.createRange();
-    var sel = window.getSelection();
-    var range = sel.getRangeAt(0);
-    range.insertNode(document.createTextNode('^'));
-    document.execCommand('subscript');
-    hatted = true;
-    // range.collapse(true);
-    // sel.removeAllRanges();
-
   }
 
   function adjustForSpaces() {
@@ -235,15 +217,16 @@
       return;
     }
   }
-  //http://stackoverflow.com/questions/118241/calculate-text-width-with-javascript
-  function getTextWidth(text, font) {
-    // re-use canvas object for better performance
-    var canvas = getTextWidth.canvas || (getTextWidth.canvas = document.createElement("canvas"));
-    var context = canvas.getContext("2d");
-    context.font = font;
-    var metrics = context.measureText(text);
-    return metrics.width;
-}
+
+  function setTrackpt(){
+    var x = ed;
+    x.value = ed.textContent;
+    var coords = getCaretCoordinates(x);
+    trackpt.style.top = coords.top + 8 +'px';
+    trackpt.style.left = coords.left + 'px';
+    trackpt.style.visibility = 'visible';
+  }
+    
 
   function turnRed(pasted) {
     var redpill = ed.getElementsByTagName('font')[0];
@@ -279,6 +262,7 @@
         overflow = true;
         document.execCommand('foreColor', null, 'red');
         document.execCommand('italic');
+        setTrackpt();
       }
       return;
     }
@@ -305,12 +289,7 @@
     document.execCommand('italic');
 
     resetCursor(cp);
-    var x = ed;
-    x.value = ed.textContent;
-    var coords = getCaretCoordinates(x, ed.selectionEnd);
-    trackpt.style.top = coords.top + 5 +'px';
-    trackpt.style.left = coords.left + 'px';
-    trackpt.style.visibility = 'visible';
+    setTrackpt();
   }
 
   function selectDivFocus(div, atend) {
@@ -381,12 +360,9 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     validatingbox.init();
-  })
-}());
+  });
 
-//https://github.com/component/textarea-caret-position/blob/master/index.js
-
-(function () {
+  //https://github.com/component/textarea-caret-position/blob/master/index.js
 
 // The properties that we copy into a mirrored div.
 // Note that some browsers, such as Firefox,
@@ -437,7 +413,7 @@ var properties = [
 var isBrowser = (typeof window !== 'undefined');
 var isFirefox = (isBrowser && window.mozInnerScreenX != null);
 
-function getCaretCoordinates(element, position, options) {
+function getCaretCoordinates(element, options) {
   if(!isBrowser) {
     throw new Error('textarea-caret-position#getCaretCoordinates should only be called in a browser');
   }
@@ -479,7 +455,7 @@ function getCaretCoordinates(element, position, options) {
     style.overflow = 'hidden';  // for Chrome to not render a scrollbar; IE keeps overflowY = 'scroll'
   }
 
-  div.textContent = element.value.substring(0, position);
+  div.textContent = element.value.substring(0, LIMIT);
   // the second special handling for input type="text" vs textarea: spaces need to be replaced with non-breaking spaces - http://stackoverflow.com/a/13402035/1269037
   if (element.nodeName === 'INPUT')
     div.textContent = div.textContent.replace(/\s/g, '\u00a0');
@@ -490,7 +466,7 @@ function getCaretCoordinates(element, position, options) {
   // The  *only* reliable way to do that is to copy the *entire* rest of the
   // textarea's content into the <span> created at the caret position.
   // for inputs, just '.' would be enough, but why bother?
-  span.textContent = element.value.substring(position) || '.';  // || because a completely empty faux span doesn't render at all
+  span.textContent = element.value.substring(LIMIT) || '.';  // || because a completely empty faux span doesn't render at all
   div.appendChild(span);
 
   var coordinates = {
@@ -505,12 +481,6 @@ function getCaretCoordinates(element, position, options) {
   }
 
   return coordinates;
-}
-
-if (typeof module != 'undefined' && typeof module.exports != 'undefined') {
-  module.exports = getCaretCoordinates;
-} else if(isBrowser){
-  window.getCaretCoordinates = getCaretCoordinates;
 }
 
 }());
