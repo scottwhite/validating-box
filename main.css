@@ -45,15 +45,16 @@
   margin-right: 5px;
 }
 #tracking-box{
-  background: lightskyblue;
+  background: #fff;
   border: none;
   outline: 0;
   line-height: 25px;
 }
 #tracking-point{
-  color: white;
+  color:red;
+  font-weight: bold;
   vertical-align: sub;
-  font-size: 0.83;
+  font-size: 1.25em;
   position: absolute;
   visibility: hidden;
 }

@@ -260,7 +260,7 @@
     if (cp === edlength) {
       if (!overflow) {
         overflow = true;
-        document.execCommand('foreColor', null, 'red');
+        document.execCommand('foreColor', null, '#999');
         document.execCommand('italic');
         setTrackpt();
       }
@@ -285,7 +285,7 @@
     console.log(range);
     sel.addRange(range);
 
-    document.execCommand('foreColor', null, 'red');
+    document.execCommand('foreColor', null, '#999');
     document.execCommand('italic');
 
     resetCursor(cp);
