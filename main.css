@@ -15,6 +15,7 @@
   visibility: hidden;
 }
 #editor-main{
+  background: transparent;
   width: 35em;
   height: 10em;
   border: solid 1px gray;
@@ -42,4 +43,17 @@
 #character-count > div{
   flex: 0;
   margin-right: 5px;
+}
+#tracking-box{
+  background: lightskyblue;
+  border: none;
+  outline: 0;
+  line-height: 25px;
+}
+#tracking-point{
+  color: white;
+  vertical-align: sub;
+  font-size: 0.83;
+  position: absolute;
+  visibility: hidden;
 }

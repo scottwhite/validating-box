@@ -1,9 +1,10 @@
 (function () {
-  var ew, ed, cc, maxc, endpos;
+  var ew, ed, cc, maxc, endpos, trackingbox, trackpt;
   var LIMIT = 140;
   var hatted = false;
   var overflow = false;
   var isgsm = true;
+
 
   function validateGSMChar(value) {
     var reg = /[A-Za-z0-9 \\r\\n@£$¥èéùìòÇØøÅå\u0394_\u03A6\u0393\u0027\u0022\u039B\u03A9\u03A0\u03A8\u03A3\u0398\u039EÆæßÉ!\#$%&amp;()*+,\\./\-:;&lt;=&gt;?¡ÄÖÑÜ§¿äöñüà^{}\\\\\\[~\\]|\u20AC]*/;
@@ -67,7 +68,7 @@
 
   function cleanText(text){
     var cleaned = '';
-    //does not work in IE/Safari, need solution alt solutions
+    //does not work in IE/Safari, need alt solutions
     for(var v of text){
       if(v.length == 1){
         cleaned += v;
@@ -100,6 +101,9 @@
     ed = document.getElementById('editor-main');
     cc = document.getElementById('current-count');
     maxc = document.getElementById('limit');
+    trackingbox = document.getElementById('tracking-box');
+    trackpt = document.getElementById('tracking-point');
+
 
     endpos = 0;
 
@@ -153,6 +157,15 @@
       turnRed();
       updatecount();
     });
+
+    var box = ed.getBoundingClientRect();
+    trackingbox.style.zIndex = -1;
+    trackingbox.style.position = 'absolute';
+    trackingbox.style.top = box.top + 'px';
+    trackingbox.style.left = box.left + 'px';
+    trackingbox.style.width = box.width + 'px';
+    trackingbox.style.height = box.height + 'px';
+
   }
 
   function stopPosSet(event) {
@@ -222,11 +235,21 @@
       return;
     }
   }
+  //http://stackoverflow.com/questions/118241/calculate-text-width-with-javascript
+  function getTextWidth(text, font) {
+    // re-use canvas object for better performance
+    var canvas = getTextWidth.canvas || (getTextWidth.canvas = document.createElement("canvas"));
+    var context = canvas.getContext("2d");
+    context.font = font;
+    var metrics = context.measureText(text);
+    return metrics.width;
+}
 
   function turnRed(pasted) {
     var redpill = ed.getElementsByTagName('font')[0];
     var sel = window.getSelection();
     var edlength = ed.textContent.length;
+
     if (edlength < adjustForSpaces()) {
       if (!redpill) {
         overflow = false;
@@ -277,10 +300,17 @@
     range.setEnd(tnode, edlength);
     console.log(range);
     sel.addRange(range);
+
     document.execCommand('foreColor', null, 'red');
     document.execCommand('italic');
 
     resetCursor(cp);
+    var x = ed;
+    x.value = ed.textContent;
+    var coords = getCaretCoordinates(x, ed.selectionEnd);
+    trackpt.style.top = coords.top + 5 +'px';
+    trackpt.style.left = coords.left + 'px';
+    trackpt.style.visibility = 'visible';
   }
 
   function selectDivFocus(div, atend) {
@@ -352,4 +382,135 @@
   document.addEventListener('DOMContentLoaded', function () {
     validatingbox.init();
   })
+}());
+
+//https://github.com/component/textarea-caret-position/blob/master/index.js
+
+(function () {
+
+// The properties that we copy into a mirrored div.
+// Note that some browsers, such as Firefox,
+// do not concatenate properties, i.e. padding-top, bottom etc. -> padding,
+// so we have to do every single property specifically.
+var properties = [
+  'direction',  // RTL support
+  'boxSizing',
+  'width',  // on Chrome and IE, exclude the scrollbar, so the mirror div wraps exactly as the textarea does
+  'height',
+  'overflowX',
+  'overflowY',  // copy the scrollbar for IE
+
+  'borderTopWidth',
+  'borderRightWidth',
+  'borderBottomWidth',
+  'borderLeftWidth',
+  'borderStyle',
+
+  'paddingTop',
+  'paddingRight',
+  'paddingBottom',
+  'paddingLeft',
+
+  // https://developer.mozilla.org/en-US/docs/Web/CSS/font
+  'fontStyle',
+  'fontVariant',
+  'fontWeight',
+  'fontStretch',
+  'fontSize',
+  'fontSizeAdjust',
+  'lineHeight',
+  'fontFamily',
+
+  'textAlign',
+  'textTransform',
+  'textIndent',
+  'textDecoration',  // might not make a difference, but better be safe
+
+  'letterSpacing',
+  'wordSpacing',
+
+  'tabSize',
+  'MozTabSize'
+
+];
+
+var isBrowser = (typeof window !== 'undefined');
+var isFirefox = (isBrowser && window.mozInnerScreenX != null);
+
+function getCaretCoordinates(element, position, options) {
+  if(!isBrowser) {
+    throw new Error('textarea-caret-position#getCaretCoordinates should only be called in a browser');
+  }
+
+  var debug = options && options.debug || false;
+  if (debug) {
+    var el = document.querySelector('#input-textarea-caret-position-mirror-div');
+    if ( el ) { el.parentNode.removeChild(el); }
+  }
+
+  // mirrored div
+  var div = document.createElement('div');
+  div.id = 'input-textarea-caret-position-mirror-div';
+  document.body.appendChild(div);
+
+  var style = div.style;
+  var computed = window.getComputedStyle? getComputedStyle(element) : element.currentStyle;  // currentStyle for IE < 9
+
+  // default textarea styles
+  style.whiteSpace = 'pre-wrap';
+  if (element.nodeName !== 'INPUT')
+    style.wordWrap = 'break-word';  // only for textarea-s
+
+  // position off-screen
+  style.position = 'absolute';  // required to return coordinates properly
+  if (!debug)
+    style.visibility = 'hidden';  // not 'display: none' because we want rendering
+
+  // transfer the element's properties to the div
+  properties.forEach(function (prop) {
+    style[prop] = computed[prop];
+  });
+
+  if (isFirefox) {
+    // Firefox lies about the overflow property for textareas: https://bugzilla.mozilla.org/show_bug.cgi?id=984275
+    if (element.scrollHeight > parseInt(computed.height))
+      style.overflowY = 'scroll';
+  } else {
+    style.overflow = 'hidden';  // for Chrome to not render a scrollbar; IE keeps overflowY = 'scroll'
+  }
+
+  div.textContent = element.value.substring(0, position);
+  // the second special handling for input type="text" vs textarea: spaces need to be replaced with non-breaking spaces - http://stackoverflow.com/a/13402035/1269037
+  if (element.nodeName === 'INPUT')
+    div.textContent = div.textContent.replace(/\s/g, '\u00a0');
+
+  var span = document.createElement('span');
+  // Wrapping must be replicated *exactly*, including when a long word gets
+  // onto the next line, with whitespace at the end of the line before (#7).
+  // The  *only* reliable way to do that is to copy the *entire* rest of the
+  // textarea's content into the <span> created at the caret position.
+  // for inputs, just '.' would be enough, but why bother?
+  span.textContent = element.value.substring(position) || '.';  // || because a completely empty faux span doesn't render at all
+  div.appendChild(span);
+
+  var coordinates = {
+    top: span.offsetTop + parseInt(computed['borderTopWidth']),
+    left: span.offsetLeft + parseInt(computed['borderLeftWidth'])
+  };
+
+  if (debug) {
+    span.style.backgroundColor = '#aaa';
+  } else {
+    document.body.removeChild(div);
+  }
+
+  return coordinates;
+}
+
+if (typeof module != 'undefined' && typeof module.exports != 'undefined') {
+  module.exports = getCaretCoordinates;
+} else if(isBrowser){
+  window.getCaretCoordinates = getCaretCoordinates;
+}
+
 }());
