@@ -4,7 +4,7 @@
   var hatted = false;
   var overflow = false;
   var isgsm = true;
-
+  var trackpointpos = {};
 
   function validateGSMChar(value) {
     var reg = /[A-Za-z0-9 \\r\\n@£$¥èéùìòÇØøÅå\u0394_\u03A6\u0393\u0027\u0022\u039B\u03A9\u03A0\u03A8\u03A3\u0398\u039EÆæßÉ!\#$%&amp;()*+,\\./\-:;&lt;=&gt;?¡ÄÖÑÜ§¿äöñüà^{}\\\\\\[~\\]|\u20AC]*/;
@@ -13,7 +13,6 @@
 
   function validateUSC2(value) {
     var test = value.split(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g);
-    console.log('validateUSC2', test);
     return !/[\uD800-\uDFFF]/.test(value);
   }
 
@@ -28,16 +27,14 @@
     }
     for (var i = 0; i < text.length; i++) {
       var c = text.charAt(i);
-      console.log('check text', c);
       if (!validateGSMChar(c)) {
         var evil = text.charCodeAt(i);
-        console.log('offender is ', c, evil);
+        console.debug('offender is ', c, evil);
         isgsm = false;
         LIMIT = 70;
         return;
       }
     }
-
   }
 
   // //http://stackoverflow.com/questions/4877326/how-can-i-tell-if-a-string-contains-multibyte-characters-in-javascript
@@ -140,6 +137,9 @@
         updatecount();
       }
     })
+    ed.addEventListener('touchMove', adjustTrackHeight);
+    ed.addEventListener('scroll', adjustTrackHeight);
+
     ed.addEventListener('keypress', function (evnt) {
       if (evnt.ctrlKey || evnt.metaKey || evnt.keyCode == 20 || (evnt.keyCode > 36 && evnt.keyCode < 41) || (evnt.keyCode == 8 || evnt.keyCode == 13)) {
         return;
@@ -160,6 +160,7 @@
     var box = ed.getBoundingClientRect();
     trackingbox.style.zIndex = -1;
     trackingbox.style.position = 'absolute';
+    trackingbox.style.overflow = 'hidden';
     trackingbox.style.top = box.top + 'px';
     trackingbox.style.left = box.left + 'px';
     trackingbox.style.width = box.width + 'px';
@@ -181,7 +182,6 @@
     //ie does not have trimleft cause it sucks
     var adjusted = redtext.substring(-1, LIMIT).trim();
     var base = LIMIT - adjusted.length;
-    console.log('base ', base);
     return LIMIT + base;
   }
 
@@ -211,8 +211,6 @@
   function wipe() {
     if (ed.children.length > 0) {
       var orgtxt = ed.textContent;
-      console.log('wipe ', orgtxt);
-      console.log('wipe length ', orgtxt.length);
       cleanNode(ed);
       var t = document.createTextNode(orgtxt);
       ed.appendChild(t);
@@ -223,13 +221,35 @@
   function setTrackpt(){
     var x = ed;
     x.value = ed.textContent;
-    var coords = getCaretCoordinates(x);
-    trackpt.style.top = coords.top + 8 +'px';
-    trackpt.style.left = coords.left + 'px';
+    // var coords = getCaretCoordinates(x);
+    var coords = limitCoords();
+    var box = ed.getBoundingClientRect();
+    trackpointpos.top = coords.top - box.top + 8;
+    trackpointpos.left = coords.left - box.left -2;
+    trackpointpos.scrolltop = 0;
+    trackpt.style.top = trackpointpos.top +'px';
+    trackpt.style.left = trackpointpos.left + 'px';
     trackpt.style.visibility = 'visible';
   }
   function resetTracpt(){
     trackpt.style.visibility = 'hidden';
+  }
+
+  function adjustTrackHeight(evnt){
+    var h = evnt.target.scrollTop;
+    var tpos = parseInt(trackpointpos.top);
+    var npos = tpos;
+    console.log('existing track top ', tpos);
+    //going down
+    if(h > trackpointpos.scrolltop){
+      npos= (tpos - h);
+    //going up
+    }else{
+       npos= (tpos + h);
+    }
+    console.log('adjustTrackHeight ', npos);
+    trackpointpos.scrolltop = h;
+    trackpt.style.top = npos + 'px';
   }
 
   function turnRed(pasted) {
@@ -261,7 +281,6 @@
       return;
     }
     var cp = getCaretPosition(ed);
-    console.log(cp);
     if (cp === edlength) {
       if (!overflow) {
         overflow = true;
@@ -287,7 +306,6 @@
 
     range.setStart(tnode, pos);
     range.setEnd(tnode, edlength);
-    console.log(range);
     sel.addRange(range);
 
     document.execCommand('foreColor', null, '#999');
@@ -310,6 +328,15 @@
     }
     sel.addRange(range);
     div.focus();
+  }
+
+  function limitCoords(){
+    var fnode = ed.getElementsByTagName('font')[0];
+    if(!fnode){
+      return {};
+    }
+    var box = {top: fnode.offsetTop, left: fnode.offsetLeft};
+    return box;
   }
 
   function getCaretPosition(element) {
@@ -366,126 +393,5 @@
   document.addEventListener('DOMContentLoaded', function () {
     validatingbox.init();
   });
-
-  //https://github.com/component/textarea-caret-position/blob/master/index.js
-
-// The properties that we copy into a mirrored div.
-// Note that some browsers, such as Firefox,
-// do not concatenate properties, i.e. padding-top, bottom etc. -> padding,
-// so we have to do every single property specifically.
-var properties = [
-  'direction',  // RTL support
-  'boxSizing',
-  'width',  // on Chrome and IE, exclude the scrollbar, so the mirror div wraps exactly as the textarea does
-  'height',
-  'overflowX',
-  'overflowY',  // copy the scrollbar for IE
-
-  'borderTopWidth',
-  'borderRightWidth',
-  'borderBottomWidth',
-  'borderLeftWidth',
-  'borderStyle',
-
-  'paddingTop',
-  'paddingRight',
-  'paddingBottom',
-  'paddingLeft',
-
-  // https://developer.mozilla.org/en-US/docs/Web/CSS/font
-  'fontStyle',
-  'fontVariant',
-  'fontWeight',
-  'fontStretch',
-  'fontSize',
-  'fontSizeAdjust',
-  'lineHeight',
-  'fontFamily',
-
-  'textAlign',
-  'textTransform',
-  'textIndent',
-  'textDecoration',  // might not make a difference, but better be safe
-
-  'letterSpacing',
-  'wordSpacing',
-
-  'tabSize',
-  'MozTabSize'
-
-];
-
-var isBrowser = (typeof window !== 'undefined');
-var isFirefox = (isBrowser && window.mozInnerScreenX != null);
-
-function getCaretCoordinates(element, options) {
-  if(!isBrowser) {
-    throw new Error('textarea-caret-position#getCaretCoordinates should only be called in a browser');
-  }
-
-  var debug = options && options.debug || false;
-  if (debug) {
-    var el = document.querySelector('#input-textarea-caret-position-mirror-div');
-    if ( el ) { el.parentNode.removeChild(el); }
-  }
-
-  // mirrored div
-  var div = document.createElement('div');
-  div.id = 'input-textarea-caret-position-mirror-div';
-  document.body.appendChild(div);
-
-  var style = div.style;
-  var computed = window.getComputedStyle? getComputedStyle(element) : element.currentStyle;  // currentStyle for IE < 9
-
-  // default textarea styles
-  style.whiteSpace = 'pre-wrap';
-  if (element.nodeName !== 'INPUT')
-    style.wordWrap = 'break-word';  // only for textarea-s
-
-  // position off-screen
-  style.position = 'absolute';  // required to return coordinates properly
-  if (!debug)
-    style.visibility = 'hidden';  // not 'display: none' because we want rendering
-
-  // transfer the element's properties to the div
-  properties.forEach(function (prop) {
-    style[prop] = computed[prop];
-  });
-
-  if (isFirefox) {
-    // Firefox lies about the overflow property for textareas: https://bugzilla.mozilla.org/show_bug.cgi?id=984275
-    if (element.scrollHeight > parseInt(computed.height))
-      style.overflowY = 'scroll';
-  } else {
-    style.overflow = 'hidden';  // for Chrome to not render a scrollbar; IE keeps overflowY = 'scroll'
-  }
-
-  div.textContent = element.value.substring(0, LIMIT);
-  // the second special handling for input type="text" vs textarea: spaces need to be replaced with non-breaking spaces - http://stackoverflow.com/a/13402035/1269037
-  if (element.nodeName === 'INPUT')
-    div.textContent = div.textContent.replace(/\s/g, '\u00a0');
-
-  var span = document.createElement('span');
-  // Wrapping must be replicated *exactly*, including when a long word gets
-  // onto the next line, with whitespace at the end of the line before (#7).
-  // The  *only* reliable way to do that is to copy the *entire* rest of the
-  // textarea's content into the <span> created at the caret position.
-  // for inputs, just '.' would be enough, but why bother?
-  span.textContent = element.value.substring(LIMIT) || '.';  // || because a completely empty faux span doesn't render at all
-  div.appendChild(span);
-
-  var coordinates = {
-    top: span.offsetTop + parseInt(computed['borderTopWidth']),
-    left: span.offsetLeft + parseInt(computed['borderLeftWidth'])
-  };
-
-  if (debug) {
-    span.style.backgroundColor = '#aaa';
-  } else {
-    document.body.removeChild(div);
-  }
-
-  return coordinates;
-}
 
 }());

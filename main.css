@@ -21,7 +21,7 @@
   border: solid 1px gray;
   outline:0;
   padding:5px;
-  cursor:pointer;
+  cursor:text;
   overflow: auto;
 }
 #editor-wrapper > div{
@@ -48,7 +48,7 @@
   background: #fff;
   border: none;
   outline: 0;
-  line-height: 25px;
+  /*line-height: 25px;*/
 }
 #tracking-point{
   color:red;
