@@ -191,7 +191,7 @@
     var pos = cp;
     if (cp > n.textContent.length) {
       var redpill = ed.children.item(0);
-      n = redpill.firstChild.firstChild; //font/i
+      n = redpill.firstChild;
       var leftovers = ed.textContent.length - cp;
       console.log('leftovers ', leftovers);
       pos = n.textContent.length - leftovers;
@@ -226,7 +226,9 @@
     trackpt.style.left = coords.left + 'px';
     trackpt.style.visibility = 'visible';
   }
-    
+  function resetTracpt(){
+    trackpt.style.visibility = 'hidden';
+  }
 
   function turnRed(pasted) {
     var redpill = ed.getElementsByTagName('font')[0];
@@ -234,6 +236,7 @@
     var edlength = ed.textContent.length;
 
     if (edlength < adjustForSpaces()) {
+      resetTracpt();
       if (!redpill) {
         overflow = false;
         if (pasted === true) {
@@ -261,7 +264,7 @@
       if (!overflow) {
         overflow = true;
         document.execCommand('foreColor', null, '#999');
-        document.execCommand('italic');
+        // document.execCommand('italic');
         setTrackpt();
       }
       return;
@@ -286,7 +289,7 @@
     sel.addRange(range);
 
     document.execCommand('foreColor', null, '#999');
-    document.execCommand('italic');
+    // document.execCommand('italic');
 
     resetCursor(cp);
     setTrackpt();
