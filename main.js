@@ -22,11 +22,13 @@
     if (!text) {
       isgsm = true;
       LIMIT = 140;
-      text = ed.textContent;
+      //&nbsp; is inserted between words, cause.. browsers, chrome bug (this also is a bug in firefox)
+      //https://bugs.chromium.org/p/chromium/issues/detail?id=310149
+      text = ed.textContent.replace(/\u00A0/g,' '); 
     }
     for (var i = 0; i < text.length; i++) {
       var c = text.charAt(i);
-      console.log('chekc text', c);
+      console.log('check text', c);
       if (!validateGSMChar(c)) {
         var evil = text.charCodeAt(i);
         console.log('offender is ', c, evil);
