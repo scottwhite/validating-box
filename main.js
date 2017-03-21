@@ -73,6 +73,7 @@
         cleaned += v;
       }
     }
+    cleaned = cleaned.replace(/\u00A0/g,' ');
     checkText(cleaned);
     return cleaned;
 
@@ -221,7 +222,6 @@
   function setTrackpt(){
     var x = ed;
     x.value = ed.textContent;
-    // var coords = getCaretCoordinates(x);
     var coords = limitCoords();
     var box = ed.getBoundingClientRect();
     trackpointpos.top = coords.top - box.top + 8;
@@ -239,15 +239,7 @@
     var h = evnt.target.scrollTop;
     var tpos = parseInt(trackpointpos.top);
     var npos = tpos;
-    console.log('existing track top ', tpos);
-    //going down
-    if(h > trackpointpos.scrolltop){
-      npos= (tpos - h);
-    //going up
-    }else{
-       npos= (tpos + h);
-    }
-    console.log('adjustTrackHeight ', npos);
+    npos= (tpos - h);
     trackpointpos.scrolltop = h;
     trackpt.style.top = npos + 'px';
   }
