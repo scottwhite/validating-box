@@ -101,11 +101,11 @@ if (!String.fromCodePoint) {
     }
   }
 
-  // //http://stackoverflow.com/questions/4877326/how-can-i-tell-if-a-string-contains-multibyte-characters-in-javascript
+  //http://stackoverflow.com/questions/4877326/how-can-i-tell-if-a-string-contains-multibyte-characters-in-javascript
   function surrogatePairToCodePoint(charCode1, charCode2) {
     return ((charCode1 & 0x3FF) << 10) + (charCode2 & 0x3FF) + 0x10000;
   }
-  function cleanTextWhat(str){
+  function cleanText(str){
 
     // Read string in character by character and create an array of code points
     var codePoints = [], i = 0, charCode;
@@ -178,7 +178,7 @@ if (!String.fromCodePoint) {
   // }
 
   function insertText(cp, text) {
-    var cleaned = cleanTextWhat(text);
+    var cleaned = cleanText(text);
     if (cp == ed.textContent.length) {
       ed.textContent = ed.textContent + cleaned + ' ';
       return;
@@ -220,12 +220,12 @@ if (!String.fromCodePoint) {
 
     ed.addEventListener('keydown', function (evnt) {
       if (evnt.keyCode && (evnt.keyCode == 8 || evnt.keyCode == 13)) {
-        updatecount();
+        // updatecount();
         checkText();
         return;
       }
       if (evnt.key && evnt.key.toLocaleLowerCase() == 'backspace') {
-        updatecount();
+        // updatecount();
         checkText();
         return;
       }
@@ -233,8 +233,8 @@ if (!String.fromCodePoint) {
     ed.addEventListener('keyup', function (evnt) {
       if (evnt.keyCode && (evnt.keyCode == 8 || evnt.keyCode == 13)) {
         turnRed();
-        updatecount();
       }
+      updatecount();
     })
     ed.addEventListener('touchMove', adjustTrackHeight);
     ed.addEventListener('scroll', adjustTrackHeight);
@@ -253,7 +253,7 @@ if (!String.fromCodePoint) {
       }
       checkText(str);
       turnRed();
-      updatecount();
+      // updatecount();
     });
 
     var box = ed.getBoundingClientRect();
@@ -322,8 +322,16 @@ if (!String.fromCodePoint) {
     x.value = ed.textContent;
     var coords = limitCoords();
     var box = ed.getBoundingClientRect();
-    trackpointpos.top = coords.top - box.top + 8;
-    trackpointpos.left = coords.left - box.left -2;
+    console.log('setTrackpt box: ', box);
+    console.log('setTrackpt box: ', coords);
+    if(coords.top){
+      trackpointpos.top = coords.top - box.top + 8;
+      trackpointpos.left = coords.left - box.left -2;
+    }else{
+      trackpointpos.top = box.top + 8;
+      trackpointpos.left = box.left -2;
+    }
+    
     trackpointpos.scrolltop = 0;
     trackpt.style.top = trackpointpos.top +'px';
     trackpt.style.left = trackpointpos.left + 'px';
@@ -371,12 +379,13 @@ if (!String.fromCodePoint) {
       return;
     }
     cp = getCaretPosition(ed);
+    console.log('cursor pos: ', cp);
+    console.log('edlength: ', edlength);
     if (cp === edlength) {
       if (!overflow) {
         overflow = true;
         document.execCommand('foreColor', null, '#999');
-        // document.execCommand('italic');
-        setTrackpt();
+        setTimeout(setTrackpt, 100); //todo: maybe recurisve till font tag exists... maybe
       }
       return;
     }
@@ -399,7 +408,6 @@ if (!String.fromCodePoint) {
     sel.addRange(range);
 
     document.execCommand('foreColor', null, '#999');
-    // document.execCommand('italic');
 
     resetCursor(cp);
     setTrackpt();
@@ -423,6 +431,7 @@ if (!String.fromCodePoint) {
   function limitCoords(){
     var fnode = ed.getElementsByTagName('font')[0];
     if(!fnode){
+      console.log('limitCoords why you no have box');
       return {};
     }
     var box = {top: fnode.offsetTop, left: fnode.offsetLeft};
@@ -455,12 +464,13 @@ if (!String.fromCodePoint) {
 
   function updatecount() {
     var s = ed.textContent;
-    if (s.trimLeft) {
-      endpos = s.trimLeft().length;
-    } else {
-      var sleft = s.replace(/^[\s\t]+/, '');
-      endpos = sleft.length;
-    }
+    // if (s.trimLeft) {
+    //   endpos = s.trimLeft().length;
+    // } else {
+    //   var sleft = s.replace(/^[\s\t]+/, '');
+    //   endpos = sleft.length;
+    // }
+    endpos = s.length;
     cc.textContent = endpos;
     maxc.textContent = LIMIT;
     if (endpos > LIMIT) {
