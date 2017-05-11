@@ -384,7 +384,7 @@ if (!String.fromCodePoint) {
     if (cp === edlength) {
       if (!overflow) {
         overflow = true;
-        document.execCommand('foreColor', null, '#999');
+        document.execCommand('foreColor', null, '#999999');
         setTimeout(setTrackpt, 100); //todo: maybe recurisve till font tag exists... maybe
       }
       return;
@@ -407,7 +407,7 @@ if (!String.fromCodePoint) {
     range.setEnd(tnode, edlength);
     sel.addRange(range);
 
-    document.execCommand('foreColor', null, '#999');
+    document.execCommand('foreColor', null, '#999999');
 
     resetCursor(cp);
     setTrackpt();
