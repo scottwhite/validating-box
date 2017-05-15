@@ -1,19 +1,19 @@
 
 /*! http://mths.be/fromcodepoint v0.1.0 by @mathias */
 if (!String.fromCodePoint) {
-  (function() {
-    var defineProperty = (function() {
+  (function () {
+    var defineProperty = (function () {
       // IE 8 only supports `Object.defineProperty` on DOM elements
       try {
         var object = {};
         var $defineProperty = Object.defineProperty;
         var result = $defineProperty(object, object, object) && $defineProperty;
-      } catch(error) {}
+      } catch (error) { }
       return result;
     }());
     var stringFromCharCode = String.fromCharCode;
     var floor = Math.floor;
-    var fromCodePoint = function() {
+    var fromCodePoint = function () {
       var MAX_SIZE = 0x4000;
       var codeUnits = [];
       var highSurrogate;
@@ -87,8 +87,9 @@ if (!String.fromCodePoint) {
       LIMIT = 140;
       //&nbsp; is inserted between words, cause.. browsers, chrome bug (this also is a bug in firefox)
       //https://bugs.chromium.org/p/chromium/issues/detail?id=310149
-      text = ed.textContent.replace(/\u00A0/g,' '); 
+      text = ed.textContent.replace(/\u00A0/g, ' ');
     }
+    console.log('checkText: ', text.length);
     for (var i = 0; i < text.length; i++) {
       var c = text.charAt(i);
       if (!validateGSMChar(c)) {
@@ -105,11 +106,11 @@ if (!String.fromCodePoint) {
   function surrogatePairToCodePoint(charCode1, charCode2) {
     return ((charCode1 & 0x3FF) << 10) + (charCode2 & 0x3FF) + 0x10000;
   }
-  function cleanText(str){
+  function cleanText(str) {
 
     // Read string in character by character and create an array of code points
     var codePoints = [], i = 0, charCode;
-    
+
     while (i < str.length) {
       charCode = str.charCodeAt(i);
       if ((charCode & 0xF800) == 0xD800) {
@@ -121,8 +122,8 @@ if (!String.fromCodePoint) {
     }
     var cleaned = '';
     console.log('codepoints ', codePoints);
-    codePoints.forEach(function(c){
-      if(c <= 65535){
+    codePoints.forEach(function (c) {
+      if (c <= 65535) {
         cleaned += String.fromCodePoint(c);
       }
     });
@@ -130,52 +131,37 @@ if (!String.fromCodePoint) {
   }
 
   function fixedCharCodeAt(str, idx) {
-  // ex. fixedCharCodeAt('\uD800\uDC00', 0); // 65536
-  // ex. fixedCharCodeAt('\uD800\uDC00', 1); // false
-  idx = idx || 0;
-  var code = str.charCodeAt(idx);
-  var hi, low;
-  
-  // High surrogate (could change last hex to 0xDB7F
-  // to treat high private surrogates 
-  // as single characters)
-  if (0xD800 <= code && code <= 0xDBFF) {
-    hi = code;
-    low = str.charCodeAt(idx + 1);
-    if (isNaN(low)) {
-      throw 'High surrogate not followed by ' +
+    // ex. fixedCharCodeAt('\uD800\uDC00', 0); // 65536
+    // ex. fixedCharCodeAt('\uD800\uDC00', 1); // false
+    idx = idx || 0;
+    var code = str.charCodeAt(idx);
+    var hi, low;
+
+    // High surrogate (could change last hex to 0xDB7F
+    // to treat high private surrogates 
+    // as single characters)
+    if (0xD800 <= code && code <= 0xDBFF) {
+      hi = code;
+      low = str.charCodeAt(idx + 1);
+      if (isNaN(low)) {
+        throw 'High surrogate not followed by ' +
         'low surrogate in fixedCharCodeAt()';
+      }
+      return ((hi - 0xD800) * 0x400) +
+        (low - 0xDC00) + 0x10000;
     }
-    return ((hi - 0xD800) * 0x400) +
-      (low - 0xDC00) + 0x10000;
+    if (0xDC00 <= code && code <= 0xDFFF) { // Low surrogate
+      // We return false to allow loops to skip
+      // this iteration since should have already handled
+      // high surrogate above in the previous iteration
+      return false;
+      // hi = str.charCodeAt(idx - 1);
+      // low = code;
+      // return ((hi - 0xD800) * 0x400) +
+      //   (low - 0xDC00) + 0x10000;
+    }
+    return code;
   }
-  if (0xDC00 <= code && code <= 0xDFFF) { // Low surrogate
-    // We return false to allow loops to skip
-    // this iteration since should have already handled
-    // high surrogate above in the previous iteration
-    return false;
-    // hi = str.charCodeAt(idx - 1);
-    // low = code;
-    // return ((hi - 0xD800) * 0x400) +
-    //   (low - 0xDC00) + 0x10000;
-  }
-  return code;
-}
-
-  // function cleanText(text){
-  //   var cleaned = '';
-  //   //does not work in IE/Safari, need alt solutions
-  //   var v;
-  //   for(v of text){
-  //     if(v.length == 1){
-  //       cleaned += v;
-  //     }
-  //   }
-  //   cleaned = cleaned.replace(/\u00A0/g,' ');
-  //   checkText(cleaned);
-  //   return cleaned;
-
-  // }
 
   function insertText(cp, text) {
     var cleaned = cleanText(text);
@@ -213,25 +199,31 @@ if (!String.fromCodePoint) {
       var pasted = (cp == ed.textContent.length);
       var clip = evnt.clipboardData || window.clipboardData;
       var text = clip.getData('text');
+      console.log('pasted text:', text.length);
       insertText(cp, text);
       updatecount();
       turnRed(pasted);
     });
 
-    ed.addEventListener('keydown', function (evnt) {
-      if (evnt.keyCode && (evnt.keyCode == 8 || evnt.keyCode == 13)) {
-        // updatecount();
-        checkText();
-        return;
-      }
-      if (evnt.key && evnt.key.toLocaleLowerCase() == 'backspace') {
-        // updatecount();
-        checkText();
-        return;
-      }
-    });
+    // ed.addEventListener('keydown', function (evnt) {
+    //   if (evnt.keyCode && (evnt.keyCode == 8 || evnt.keyCode == 13)) {
+    //     // updatecount();
+    //     checkText();
+    //     return;
+    //   }
+    //   if (evnt.key && evnt.key.toLocaleLowerCase() == 'backspace') {
+    //     // updatecount();
+    //     checkText();
+    //     return;
+    //   }
+    // });
     ed.addEventListener('keyup', function (evnt) {
       if (evnt.keyCode && (evnt.keyCode == 8 || evnt.keyCode == 13)) {
+        checkText();
+        turnRed();
+      }
+      if (evnt.key && evnt.key.toLocaleLowerCase() == 'backspace') {
+        checkText();
         turnRed();
       }
       updatecount();
@@ -253,7 +245,6 @@ if (!String.fromCodePoint) {
       }
       checkText(str);
       turnRed();
-      // updatecount();
     });
 
     var box = ed.getBoundingClientRect();
@@ -317,35 +308,37 @@ if (!String.fromCodePoint) {
     }
   }
 
-  function setTrackpt(){
+  function setTrackpt() {
     var x = ed;
     x.value = ed.textContent;
     var coords = limitCoords();
     var box = ed.getBoundingClientRect();
     console.log('setTrackpt box: ', box);
     console.log('setTrackpt box: ', coords);
-    if(coords.top){
-      trackpointpos.top = coords.top - box.top + 8;
-      trackpointpos.left = coords.left - box.left -2;
-    }else{
-      trackpointpos.top = box.top + 8;
-      trackpointpos.left = box.left -2;
+    var FUDGELEFT = 3;
+    var FUDGETOP = 8;
+    if (coords.top) {
+      trackpointpos.top = coords.top - box.top + FUDGETOP;
+      trackpointpos.left = coords.left - box.left - FUDGELEFT;
+    } else {
+      trackpointpos.top = box.top + FUDGETOP;
+      trackpointpos.left = box.left - FUDGELEFT;
     }
-    
+
     trackpointpos.scrolltop = 0;
-    trackpt.style.top = trackpointpos.top +'px';
+    trackpt.style.top = trackpointpos.top + 'px';
     trackpt.style.left = trackpointpos.left + 'px';
     trackpt.style.visibility = 'visible';
   }
-  function resetTracpt(){
+  function resetTracpt() {
     trackpt.style.visibility = 'hidden';
   }
 
-  function adjustTrackHeight(evnt){
+  function adjustTrackHeight(evnt) {
     var h = evnt.target.scrollTop;
     var tpos = parseInt(trackpointpos.top);
     var npos = tpos;
-    npos= (tpos - h);
+    npos = (tpos - h);
     trackpointpos.scrolltop = h;
     trackpt.style.top = npos + 'px';
   }
@@ -355,7 +348,10 @@ if (!String.fromCodePoint) {
     var sel = window.getSelection();
     var edlength = ed.textContent.length;
     var cp, range;
-    if (edlength < adjustForSpaces()) {
+    var t = adjustForSpaces();
+    console.log("adjustedForSpaces: ", t);
+    console.log('ed first check ', edlength);
+    if (edlength < t) {
       resetTracpt();
       if (!redpill) {
         overflow = false;
@@ -383,6 +379,7 @@ if (!String.fromCodePoint) {
     console.log('edlength: ', edlength);
     if (cp === edlength) {
       if (!overflow) {
+        console.log("cp == edlength");
         overflow = true;
         document.execCommand('foreColor', null, '#999999');
         setTimeout(setTrackpt, 100); //todo: maybe recurisve till font tag exists... maybe
@@ -428,13 +425,13 @@ if (!String.fromCodePoint) {
     div.focus();
   }
 
-  function limitCoords(){
+  function limitCoords() {
     var fnode = ed.getElementsByTagName('font')[0];
-    if(!fnode){
+    if (!fnode) {
       console.log('limitCoords why you no have box');
       return {};
     }
-    var box = {top: fnode.offsetTop, left: fnode.offsetLeft};
+    var box = { top: fnode.offsetTop, left: fnode.offsetLeft };
     return box;
   }
 
